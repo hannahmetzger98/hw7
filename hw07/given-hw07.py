@@ -135,13 +135,26 @@ def normalize(df, lc):
 
 def comparePreprocessing():
     df, inputCols, outputCol = readData()
+    inputsDF = df.loc[:, inputCols]
+    outputsSer = df.loc[:, outputCol]
     
-    #Orignal dataset
+    #Orignal dataset, k folds, 10-fold cross validation on the dataset, loop executes 1o times,
+    #make training and testing, fit testing and predict on training, do this 10 times. 
+    #hw5 did this manual, hw6 still built training and testing, did the 1NN test find the nearest row and returned
+    #classification 
+    #class, fit, lets model learn and predict does the predications on the stuff we wanted it to. 
+    #see 
+    '''
+    alg = OneNNClassifier()
+    cvScores = model_selection.cross_val_score(alg, inputDF, outputSeries, cv=k, scoring = alg.scorer)
+    return cvScores.mean()
+    '''
     dfOg = df.copy()
     dfOg = accuracyOfActualVsPredicted(outputCol, inputCols)
     print(dfOg)
     
-    #norm dataset
+    #norm dataset, before you normalize make a copy; dont use testNorm
+    #use normalize, and then use that returned df to call crossvalScore
     dfN = df.copy()
     dfN = testNormalize()
     print(dfN)
