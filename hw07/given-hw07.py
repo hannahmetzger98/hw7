@@ -5,6 +5,8 @@ from sklearn.metrics import make_scorer
 from sklearn.preprocessing import StandardScaler
 from sklearn import preprocessing
 import numpy as np
+from sklearn import model_selection
+import seaborn as sns
 # -----------------------------------------------------------------------------
 # From hw06
 
@@ -126,6 +128,9 @@ def testNormalize():
 def normalize(df, lc):
     df.loc[:, lc] = ((df.loc[:, lc] - df.loc[:, lc].min())/(df.loc[:, lc].max() - df.loc[:, lc].min()))
     return df
+ 
+    
+ 
 
 
 
@@ -134,9 +139,10 @@ def normalize(df, lc):
 # Problem 3
 
 def comparePreprocessing():
+    
     df, inputCols, outputCol = readData()
-    inputsDF = df.loc[:, inputCols]
-    outputsSer = df.loc[:, outputCol]
+    inputDF = df.loc[:, inputCols]
+    outputSeries = df.loc[:, outputCol]
     
     #Orignal dataset, k folds, 10-fold cross validation on the dataset, loop executes 1o times,
     #make training and testing, fit testing and predict on training, do this 10 times. 
@@ -144,40 +150,104 @@ def comparePreprocessing():
     #classification 
     #class, fit, lets model learn and predict does the predications on the stuff we wanted it to. 
     #see 
-    '''
-    alg = OneNNClassifier()
-    cvScores = model_selection.cross_val_score(alg, inputDF, outputSeries, cv=k, scoring = alg.scorer)
-    return cvScores.mean()
-    '''
-    dfOg = df.copy()
-    dfOg = accuracyOfActualVsPredicted(outputCol, inputCols)
-    print(dfOg)
+    
+    og = OneNNClassifier()
+    cvScores = model_selection.cross_val_score(og, inputDF, outputSeries, cv=10, scoring=og.scorer)
+    print(cvScores.mean())
+    
     
     #norm dataset, before you normalize make a copy; dont use testNorm
     #use normalize, and then use that returned df to call crossvalScore
     dfN = df.copy()
-    dfN = testNormalize()
-    print(dfN)
+    dfN, inputCols, outputCol = readData()
+    someCols = inputCols[:]
+    dfN = normalize(dfN, someCols)
+    
+    inputDF = dfN.loc[:, inputCols]
+    outputSeries = dfN.loc[:, outputCol]
+    
+    n = OneNNClassifier()
+    cvScoresN = model_selection.cross_val_score(n, inputDF, outputSeries, cv=10, scoring = n.scorer)
+    print(cvScoresN.mean())
+    
+
     
     #stan dataset
     dfS = df.copy()
-    dfS = testStandardize()
-    print(dfN)
+    dfS, inputCols, outputCol = readData()
+    someCols= inputCols[:]
+    dfS = standardize(dfS, someCols)
     
     
-
-
-comparePreprocessing()
-
-
-
-
-
-
+    inputDFS = dfS.loc[:, inputCols]
+    outputsSerS = dfS.loc[:, outputCol]
+    
+    s = OneNNClassifier()
+    cvScoresS = model_selection.cross_val_score(s, inputDFS, outputsSerS, cv=10, scoring = s.scorer)
+    print(cvScoresS.mean())
+    
+    '''
+    a. the results: the first is the fastest becuase it does not require calling a stand/norm function.
+    the other two, standardize and normalize are really close, because they require similar computing energy
+    from the CPU to excute the math to change the data in their structures. 
+    
+    b. z-transformation essentially scales dissimilar data, so like in the wine, some of the colms have numbers
+    in the 100's and others in 2.33 digits. so then you can compare the scores of that data. 1NN 96.1% (z-transformed data))
+    
+    c. leave-one-out is a special case of cross validatoin, where only one instance of the data is used as the 
+    testing set at a time, so it goes through the whole set of data using a bunch of training information,
+    and that would report a higher accuracy for the results. 
+            0.7584967320261438
+            0.9490196078431372
+            0.9545751633986927
+    
+    '''
 # -----------------------------------------------------------------------------
 # Problem 4
 
+'''
+a. -0.05148233107713217
+it is negatively skewed
+b. this is a total guess, but (0, -.5)
+c. most likely classification 1. 
+d. because Diluted and Proline have some difference between the classifications in their hisotgrams, while only 
+keepign the two would skew data alot, we think these two may help still represent a deceent accuracy. 
+so itd be skewed but maybe these wouldnt add horribly to skewing. 
+e.Nonflavanoid Phenols and Ash, ... lets ask tm. the ash i will say has most of its classification in the 0 zone
+so none of the three classes skewed more positively or negativley. 
 
+Diluted and proline: 0.8764705882352942, 
+ash and n acids: 0.4879084967320261
+
+
+'''
+def testSubsets():
+    dfS, inputCols, outputCol = readData()
+    
+    inputCols = ["Diluted", "Proline"]
+    someCols = inputCols
+    dfS = standardize(dfS, someCols)
+    
+    
+    inputDFS = dfS.loc[:, someCols]
+    outputsSerS = dfS.loc[:, outputCol]
+    
+    s = OneNNClassifier()
+    cvScoresS = model_selection.cross_val_score(s, inputDFS, outputsSerS, cv=10, scoring = s.scorer)
+    print(cvScoresS.mean())
+    
+    dfS, inputCols, outputCol = readData()
+    inputCols = ["Ash", "Nonflavanoid Phenols"]
+    someCols = inputCols
+    dfS = standardize(dfS, someCols)
+    
+    
+    inputDFS = dfS.loc[:, someCols]
+    outputsSerS = dfS.loc[:, outputCol]
+    
+    s = OneNNClassifier()
+    cvScoresS = model_selection.cross_val_score(s, inputDFS, outputsSerS, cv=10, scoring = s.scorer)
+    print(cvScoresS.mean())
 
 
 # --------------------------------------------------------------------------------------
